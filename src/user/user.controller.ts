@@ -10,8 +10,9 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserService } from './user.service';
 
-let users = [
+const users = [
   {
     id: 1,
     name: 'Jonas',
@@ -86,52 +87,30 @@ let users = [
 
 @Controller('users')
 export class UserController {
+  constructor(private readonly userService: UserService) {}
+
   @Post()
   async create(@Body() body: CreateUserDto) {
-    const idExist = users.find((u) => u.id === body.id);
-    if (idExist) {
-      return { message: `Usuário com o id: ${body.id} já existe!` };
-    }
-    users.push(body);
-    return { status: 'success', body };
+    return this.userService.create(body);
   }
 
   @Get()
-  async read() {
-    return { response: users };
+  async list() {
+    return this.userService.findAll();
   }
 
   @Get(':id')
-  async readOne(@Param('id', ParseIntPipe) param) {
-    const user = users.find((u) => u.id === param);
-    return { response: user, idUser: param.id };
+  async findOne(@Param('id', ParseIntPipe) param) {
+    return this.userService.findOne(param);
   }
 
   @Patch(':id')
   async update(@Body() body: UpdateUserDto, @Param('id', ParseIntPipe) param) {
-    const index = users.findIndex(function (user) {
-      return user.id === param;
-    });
-    if (index !== -1) {
-      Object.assign(users[index], {
-        id: param,
-        name: body.name,
-        email: body.email,
-        job: body.job,
-      });
-      return { message: 'Alterado com sucesso', user: users[index] };
-    } else {
-      return `Usuário com id: ${param} não encontrado.`;
-    }
+    return this.userService.update(body, param);
   }
   @Delete(':id')
   async delete(@Param('id', ParseIntPipe) param) {
-    const idExist = users.find((u) => u.id === param.id);
-    if (!idExist) {
-      return `Usuário com id: ${+param.id} não encontrado.`;
-    }
-    const user = users.filter((u) => u.id !== +param.id);
-    users = user;
-    return `Usuário com id: ${+param.id} deletado com sucesso!`;
+    const user = await this.userService.delete(param);
+    return `Usuário ${user?.name} deletado com sucesso`;
   }
 }
