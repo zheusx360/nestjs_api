@@ -8,16 +8,6 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async create(userDto: CreateUserDto) {
-    const exist = await this.prisma.user.findFirst({
-      where: {
-        email: userDto.email,
-      },
-    });
-
-    if (exist) {
-      return `Usuário já criado com o email ${userDto.email}`;
-    }
-
     const users = await this.prisma.user.create({
       data: userDto,
     });
@@ -51,7 +41,7 @@ export class UserService {
   }
 
   async exists(id: number) {
-    if (!(await this.findOne(id))) {
+    if (!(await this.prisma.user.count({ where: { id } }))) {
       throw new NotFoundException(`Usuário com id: ${id} não existe.`);
     }
   }
